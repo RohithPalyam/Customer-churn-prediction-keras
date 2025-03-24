@@ -12,10 +12,10 @@ import numpy as np
 def load_data():
     try:
         # Ensure the file path is correct and handle errors
-        data = pd.read_csv('customer_churn.csv')  # Ensure the file exists in the same directory
+        data = pd.read_csv('customer_churn.csv.csv')  # Adjust file name if necessary
         return data
     except FileNotFoundError:
-        st.error("File 'customer_churn.csv' not found. Please upload the file.")
+        st.error("File 'customer_churn.csv.csv' not found. Please upload the file.")
         return None
 
 customer = load_data()
@@ -136,36 +136,106 @@ elif task == "Data Visualization: Internet Service Distribution":
         ax.set_title('Distribution of Internet Service')
         st.pyplot(fig)
 
-elif task in [
-    "Model Building: Sequential Model with Tenure",
-    "Model Building: Sequential Model with Dropout",
-    "Model Building: Sequential Model with Multiple Features"
-]:
-    st.header("Download Options")
-    st.write("Model building tasks have been removed. You can download the dataset or the notebook file instead.")
-    
-    # Download dataset
-    if st.button("Download Dataset (customer_churn.csv)"):
-        try:
-            with open("customer_churn.csv", "rb") as file:
-                st.download_button(
-                    label="Click here to download",
-                    data=file,
-                    file_name="customer_churn.csv",
-                    mime="text/csv"
-                )
-        except FileNotFoundError:
-            st.error("File 'customer_churn.csv' not found. Please ensure it exists in the same directory.")
-    
-    # Download .ipynb file
-    if st.button("Download Notebook (churn.ipynb)"):
-        try:
-            with open("churn.ipynb", "rb") as file:
-                st.download_button(
-                    label="Click here to download",
-                    data=file,
-                    file_name="churn.ipynb",
-                    mime="application/x-ipynb+json"
-                )
-        except FileNotFoundError:
-            st.error("File 'churn.ipynb' not found. Please ensure it exists in the same directory.")
+elif task == "Model Building: Sequential Model with Tenure":
+    st.header("Code: Sequential Model with Tenure as Feature")
+    with st.echo():
+        x = customer[['tenure']].values.astype('float32')
+        y = customer['Churn'].values.astype('int32')
+
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
+
+        model = Sequential([
+            Dense(12, input_dim=1, activation='relu'),
+            Dense(8, activation='relu'),
+            Dense(1, activation='sigmoid')
+        ])
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        history = model.fit(x_train, y_train, epochs=150, validation_data=(x_test, y_test), verbose=0)
+
+        st.write("Model Summary")
+        model.summary(print_fn=lambda x: st.text(x))
+
+        st.write("Accuracy vs Epochs")
+        fig, ax = plt.subplots()
+        ax.plot(history.history['accuracy'], label='Train')
+        ax.plot(history.history['val_accuracy'], label='Test')
+        ax.set_title('Model Accuracy')
+        ax.set_ylabel('Accuracy')
+        ax.set_xlabel('Epoch')
+        ax.legend(loc='upper left')
+        st.pyplot(fig)
+
+        y_pred = (model.predict(x_test) > 0.5).astype(int)
+        st.write("Confusion Matrix")
+        st.write(confusion_matrix(y_test, y_pred))
+
+elif task == "Model Building: Sequential Model with Dropout":
+    st.header("Code: Sequential Model with Dropout Layers")
+    with st.echo():
+        x = customer[['tenure']].values.astype('float32')
+        y = customer['Churn'].values.astype('int32')
+
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
+
+        model = Sequential([
+            Dense(12, input_dim=1, activation='relu'),
+            Dropout(0.3),
+            Dense(8, activation='relu'),
+            Dropout(0.2),
+            Dense(1, activation='sigmoid')
+        ])
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        history = model.fit(x_train, y_train, epochs=150, validation_data=(x_test, y_test), verbose=0)
+
+        st.write("Model Summary")
+        model.summary(print_fn=lambda x: st.text(x))
+
+        st.write("Accuracy vs Epochs")
+        fig, ax = plt.subplots()
+        ax.plot(history.history['accuracy'], label='Train')
+        ax.plot(history.history['val_accuracy'], label='Test')
+        ax.set_title('Model Accuracy')
+        ax.set_ylabel('Accuracy')
+        ax.set_xlabel('Epoch')
+        ax.legend(loc='upper left')
+        st.pyplot(fig)
+
+        y_pred = (model.predict(x_test) > 0.5).astype(int)
+        st.write("Confusion Matrix")
+        st.write(confusion_matrix(y_test, y_pred))
+
+elif task == "Model Building: Sequential Model with Multiple Features":
+    st.header("Code: Sequential Model with Multiple Features")
+    with st.echo():
+        x = customer[['MonthlyCharges', 'tenure', 'TotalCharges']].values.astype('float32')
+        y = customer['Churn'].values.astype('int32')
+
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
+
+        model = Sequential([
+            Dense(12, input_dim=3, activation='relu'),
+            Dense(8, activation='relu'),
+            Dense(1, activation='sigmoid')
+        ])
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        history = model.fit(x_train, y_train, epochs=150, validation_data=(x_test, y_test), verbose=0)
+
+        st.write("Model Summary")
+        model.summary(print_fn=lambda x: st.text(x))
+
+        st.write("Accuracy vs Epochs")
+        fig, ax = plt.subplots()
+        ax.plot(history.history['accuracy'], label='Train')
+        ax.plot(history.history['val_accuracy'], label='Test')
+        ax.set_title('Model Accuracy')
+        ax.set_ylabel('Accuracy')
+        ax.set_xlabel('Epoch')
+        ax.legend(loc='upper left')
+        st.pyplot(fig)
+
+        y_pred = (model.predict(x_test) > 0.5).astype(int)
+        st.write("Confusion Matrix")
+        st.write(confusion_matrix(y_test, y_pred))
