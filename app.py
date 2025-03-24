@@ -44,6 +44,25 @@ task = st.sidebar.radio("Choose a task", [
     "Model Building: Sequential Model with Multiple Features"
 ])
 
+# Add Download Buttons for CSV and IPYNB Files
+st.sidebar.download_button(
+    label="Download Churn CSV File",
+    data=customer.to_csv(index=False).encode('utf-8'),
+    file_name="customer_churn.csv",
+    mime="text/csv",
+    use_container_width=True,
+    type='primary'
+)
+
+st.sidebar.download_button(
+    label="Download Churn IPYNB File",
+    data=open("churn.ipynb", "rb").read(),
+    file_name="churn.ipynb",
+    mime="application/octet-stream",
+    use_container_width=True,
+    type='primary'
+)
+st.sidebar.divider()
 # Main content based on task selection
 if task == "Code For All Tasks":
     st.header("Complete Code")
