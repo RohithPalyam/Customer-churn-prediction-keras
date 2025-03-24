@@ -87,8 +87,8 @@ elif task == "Model Building: Sequential Model with Tenure":
         y = customer[['Churn']]
 
         # Convert to NumPy arrays and ensure y is 1D
-        x = x.values
-        y = y.values.ravel()
+        x = x.values.astype('float32')  # Ensure data type is float32
+        y = y.values.ravel().astype('int32')  # Ensure data type is int32
 
         # Split the data
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
@@ -136,8 +136,8 @@ elif task == "Model Building: Sequential Model with Dropout":
         y = customer[['Churn']]
 
         # Convert to NumPy arrays and ensure y is 1D
-        x = x.values
-        y = y.values.ravel()
+        x = x.values.astype('float32')  # Ensure data type is float32
+        y = y.values.ravel().astype('int32')  # Ensure data type is int32
 
         # Split the data
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
@@ -181,8 +181,8 @@ elif task == "Model Building: Sequential Model with Multiple Features":
         y = customer[['Churn']]
 
         # Convert to NumPy arrays and ensure y is 1D
-        x = x.values
-        y = y.values.ravel()
+        x = x.values.astype('float32')  # Ensure data type is float32
+        y = y.values.ravel().astype('int32')  # Ensure data type is int32
 
         # Split the data
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
