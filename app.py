@@ -17,7 +17,9 @@ customer = load_data()
 
 # Sidebar for task selection
 st.sidebar.title("Task Selection")
-task = st.sidebar.selectbox("Choose a task", [
+st.sidebar.header("Select Tasks From Here",divider='blue')
+task = st.sidebar.radio("Choose a task", [
+    "Code For All Tasks",
     "Data Manipulation: Total Male Customers",
     "Data Manipulation: Total DSL Customers",
     "Data Manipulation: Female Senior Citizens with Mailed Check",
@@ -28,9 +30,12 @@ task = st.sidebar.selectbox("Choose a task", [
     "Model Building: Sequential Model with Dropout",
     "Model Building: Sequential Model with Multiple Features"
 ])
-
+if task=="Code For All Tasks":
+    with open("code.txt","r") as file:
+        data=file.read()
+        st.code(data,"python")
 # Main content based on task selection
-if task == "Data Manipulation: Total Male Customers":
+elif task == "Data Manipulation: Total Male Customers":
     st.header("Total Number of Male Customers")
     total_males = sum(customer['gender'] == "Male")
     st.write(f"Total number of male customers: {total_males}")
