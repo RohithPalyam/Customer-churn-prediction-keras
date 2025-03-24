@@ -13,12 +13,20 @@ def load_data():
     try:
         # Ensure the file path is correct and handle errors
         data = pd.read_csv('customer_churn.csv')  # Ensure the file exists in the same directory
+        
+        # Handle missing or invalid values in 'TotalCharges'
+        data['TotalCharges'] = pd.to_numeric(data['TotalCharges'], errors='coerce')
+        data['TotalCharges'].fillna(0, inplace=True)
+        
         return data
     except FileNotFoundError:
         st.error("File 'customer_churn.csv' not found. Please upload the file.")
         return None
 
 customer = load_data()
+
+if customer is None:
+    st.stop()
 
 # Sidebar for task selection
 st.sidebar.title("Task Selection")
@@ -35,9 +43,8 @@ task = st.sidebar.radio("Choose a task", [
     "Model Building: Sequential Model with Dropout",
     "Model Building: Sequential Model with Multiple Features"
 ])
-st.sidebar.download_button("Download .ipynb File",use_container_width=True,type='primary',data='churn.ipynb',mime='application/octet-stream')
 
-
+# Main content based on task selection
 if task == "Code For All Tasks":
     st.header("Complete Code")
     try:
@@ -47,7 +54,6 @@ if task == "Code For All Tasks":
     except FileNotFoundError:
         st.error("File 'code.txt' not found. Please ensure it exists in the same directory.")
 
-# Main content based on task selection
 elif task == "Data Manipulation: Total Male Customers":
     st.header("Code: Total Number of Male Customers")
     with st.echo():
