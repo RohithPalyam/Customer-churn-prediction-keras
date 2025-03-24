@@ -10,7 +10,7 @@ import numpy as np
 # Load the dataset
 @st.cache_data
 def load_data():
-    data = pd.read_csv('customer_churn.csv')
+    data = pd.read_csv('customer_churn.csv.csv')
     return data
 
 customer = load_data()
