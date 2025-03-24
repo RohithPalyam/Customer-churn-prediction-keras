@@ -2,16 +2,21 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
 from sklearn.metrics import confusion_matrix
 import numpy as np
 
 # Load the dataset
 @st.cache_data
 def load_data():
-    data = pd.read_csv('customer_churn.csv.csv')  # Fixed file path
-    return data
+    try:
+        # Ensure the file path is correct and handle errors
+        data = pd.read_csv('customer_churn.csv')  # Ensure the file exists in the same directory
+        return data
+    except FileNotFoundError:
+        st.error("File 'customer_churn.csv' not found. Please upload the file.")
+        return None
 
 customer = load_data()
 
@@ -32,187 +37,167 @@ task = st.sidebar.radio("Choose a task", [
 ])
 
 if task == "Code For All Tasks":
-    with open("code.txt", "r") as file:
-        data = file.read()
-        st.code(data, "python")
+    st.header("Complete Code")
+    try:
+        with open("code.txt", "r") as file:
+            data = file.read()
+            st.code(data, "python")
+    except FileNotFoundError:
+        st.error("File 'code.txt' not found. Please ensure it exists in the same directory.")
 
 # Main content based on task selection
 elif task == "Data Manipulation: Total Male Customers":
+    st.header("Code: Total Number of Male Customers")
     with st.echo():
-        st.header("Total Number of Male Customers")
-        total_males = sum(customer['gender'] == "Male")
+        total_males = (customer['gender'] == "Male").sum()
         st.write(f"Total number of male customers: {total_males}")
 
 elif task == "Data Manipulation: Total DSL Customers":
+    st.header("Code: Total Number of Customers with DSL Internet Service")
     with st.echo():
-        st.header("Total Number of Customers with DSL Internet Service")
-        total_dsl = sum(customer['InternetService'] == "DSL")
+        total_dsl = (customer['InternetService'] == "DSL").sum()
         st.write(f"Total number of customers with DSL: {total_dsl}")
 
 elif task == "Data Manipulation: Female Senior Citizens with Mailed Check":
+    st.header("Code: Female Senior Citizens with Mailed Check Payment Method")
     with st.echo():
-        st.header("Female Senior Citizens with Mailed Check Payment Method")
-        new_customer = customer[(customer['gender'] == 'Female') & (customer['SeniorCitizen'] == 1) & (customer['PaymentMethod'] == 'Mailed check')]
-        st.write(new_customer.head())
+        filtered_customers = customer[
+            (customer['gender'] == 'Female') & 
+            (customer['SeniorCitizen'] == 1) & 
+            (customer['PaymentMethod'] == 'Mailed check')
+        ]
+        st.write(filtered_customers.head())
 
 elif task == "Data Manipulation: Tenure < 10 or Total Charges < 500":
+    st.header("Code: Customers with Tenure < 10 or Total Charges < 500")
     with st.echo():
-        st.header("Customers with Tenure < 10 or Total Charges < 500")
-        new_customer = customer[(customer['tenure'] < 10) | (customer['TotalCharges'] < 500)]
-        st.write(new_customer.head())
+        filtered_customers = customer[
+            (customer['tenure'] < 10) | 
+            (customer['TotalCharges'] < 500)
+        ]
+        st.write(filtered_customers.head())
 
 elif task == "Data Visualization: Churn Distribution":
+    st.header("Code: Churn Distribution Pie Chart")
     with st.echo():
-        st.header("Churn Distribution Pie Chart")
-        names = customer["Churn"].value_counts().keys().tolist()
-        sizes = customer["Churn"].value_counts().tolist()
+        churn_counts = customer["Churn"].value_counts()
+        names = churn_counts.index.tolist()
+        sizes = churn_counts.values.tolist()
         fig, ax = plt.subplots()
         ax.pie(sizes, labels=names, autopct="%0.1f%%")
         st.pyplot(fig)
 
 elif task == "Data Visualization: Internet Service Distribution":
+    st.header("Code: Internet Service Distribution Bar Plot")
     with st.echo():
-        st.header("Internet Service Distribution Bar Plot")
+        service_counts = customer["InternetService"].value_counts()
         fig, ax = plt.subplots()
-        ax.bar(customer["InternetService"].value_counts().keys().tolist(), customer["InternetService"].value_counts().tolist(), color='orange')
+        ax.bar(service_counts.index, service_counts.values, color='orange')
         ax.set_xlabel('Categories of Internet Service')
         ax.set_ylabel('Count of categories')
         ax.set_title('Distribution of Internet Service')
         st.pyplot(fig)
 
 elif task == "Model Building: Sequential Model with Tenure":
+    st.header("Code: Sequential Model with Tenure as Feature")
     with st.echo():
-        st.header("Sequential Model with Tenure as Feature")
-        x = customer[['tenure']]
-        y = customer[['Churn']]
+        x = customer[['tenure']].values.astype('float32')
+        y = customer['Churn'].map({'Yes': 1, 'No': 0}).values.astype('int32')
 
-        # Convert to NumPy arrays and ensure y is 1D
-        x = x.values.astype('float32')  # Ensure data type is float32
-        y = y.values.ravel().astype('int32')  # Ensure data type is int32
-
-        # Split the data
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
 
-        # Debugging: Check shapes
-        st.write("x_train shape:", x_train.shape)
-        st.write("y_train shape:", y_train.shape)
-        st.write("x_test shape:", x_test.shape)
-        st.write("y_test shape:", y_test.shape)
-
-        # Build the model
-        model = Sequential()
-        model.add(Dense(12, input_dim=1, activation='relu'))
-        model.add(Dense(8, activation='relu'))
-        model.add(Dense(1, activation='sigmoid'))
+        model = Sequential([
+            Dense(12, input_dim=1, activation='relu'),
+            Dense(8, activation='relu'),
+            Dense(1, activation='sigmoid')
+        ])
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-        # Train the model
         history = model.fit(x_train, y_train, epochs=150, validation_data=(x_test, y_test), verbose=0)
 
-        # Display model summary
         st.write("Model Summary")
         model.summary(print_fn=lambda x: st.text(x))
 
-        # Plot accuracy vs epochs
         st.write("Accuracy vs Epochs")
         fig, ax = plt.subplots()
-        ax.plot(history.history['accuracy'])
-        ax.plot(history.history['val_accuracy'])
+        ax.plot(history.history['accuracy'], label='Train')
+        ax.plot(history.history['val_accuracy'], label='Test')
         ax.set_title('Model Accuracy')
         ax.set_ylabel('Accuracy')
         ax.set_xlabel('Epoch')
-        ax.legend(['Train', 'Test'], loc='upper left')
+        ax.legend(loc='upper left')
         st.pyplot(fig)
 
-        # Predict and display confusion matrix
-        y_pred = (model.predict(x_test) > 0.5).astype(int)  # Fixed predict_classes deprecation
+        y_pred = (model.predict(x_test) > 0.5).astype(int)
         st.write("Confusion Matrix")
         st.write(confusion_matrix(y_test, y_pred))
 
 elif task == "Model Building: Sequential Model with Dropout":
+    st.header("Code: Sequential Model with Dropout Layers")
     with st.echo():
-        st.header("Sequential Model with Dropout Layers")
-        x = customer[['tenure']]
-        y = customer[['Churn']]
+        x = customer[['tenure']].values.astype('float32')
+        y = customer['Churn'].map({'Yes': 1, 'No': 0}).values.astype('int32')
 
-        # Convert to NumPy arrays and ensure y is 1D
-        x = x.values.astype('float32')  # Ensure data type is float32
-        y = y.values.ravel().astype('int32')  # Ensure data type is int32
-
-        # Split the data
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
 
-        # Build the model
-        model = Sequential()
-        model.add(Dense(12, input_dim=1, activation='relu'))
-        model.add(Dropout(0.3))
-        model.add(Dense(8, activation='relu'))
-        model.add(Dropout(0.2))
-        model.add(Dense(1, activation='sigmoid'))
+        model = Sequential([
+            Dense(12, input_dim=1, activation='relu'),
+            Dropout(0.3),
+            Dense(8, activation='relu'),
+            Dropout(0.2),
+            Dense(1, activation='sigmoid')
+        ])
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-        # Train the model
         history = model.fit(x_train, y_train, epochs=150, validation_data=(x_test, y_test), verbose=0)
 
-        # Display model summary
         st.write("Model Summary")
         model.summary(print_fn=lambda x: st.text(x))
 
-        # Plot accuracy vs epochs
         st.write("Accuracy vs Epochs")
         fig, ax = plt.subplots()
-        ax.plot(history.history['accuracy'])
-        ax.plot(history.history['val_accuracy'])
+        ax.plot(history.history['accuracy'], label='Train')
+        ax.plot(history.history['val_accuracy'], label='Test')
         ax.set_title('Model Accuracy')
         ax.set_ylabel('Accuracy')
         ax.set_xlabel('Epoch')
-        ax.legend(['Train', 'Test'], loc='upper left')
+        ax.legend(loc='upper left')
         st.pyplot(fig)
 
-        # Predict and display confusion matrix
-        y_pred = (model.predict(x_test) > 0.5).astype(int)  # Fixed predict_classes deprecation
+        y_pred = (model.predict(x_test) > 0.5).astype(int)
         st.write("Confusion Matrix")
         st.write(confusion_matrix(y_test, y_pred))
 
 elif task == "Model Building: Sequential Model with Multiple Features":
+    st.header("Code: Sequential Model with Multiple Features")
     with st.echo():
-        st.header("Sequential Model with Multiple Features")
-        x = customer[['MonthlyCharges', 'tenure', 'TotalCharges']]
-        y = customer[['Churn']]
+        x = customer[['MonthlyCharges', 'tenure', 'TotalCharges']].values.astype('float32')
+        y = customer['Churn'].map({'Yes': 1, 'No': 0}).values.astype('int32')
 
-        # Convert to NumPy arrays and ensure y is 1D
-        x = x.values.astype('float32')  # Ensure data type is float32
-        y = y.values.ravel().astype('int32')  # Ensure data type is int32
-
-        # Split the data
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
 
-        # Build the model
-        model = Sequential()
-        model.add(Dense(12, input_dim=3, activation='relu'))
-        model.add(Dense(8, activation='relu'))
-        model.add(Dense(1, activation='sigmoid'))
+        model = Sequential([
+            Dense(12, input_dim=3, activation='relu'),
+            Dense(8, activation='relu'),
+            Dense(1, activation='sigmoid')
+        ])
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-        # Train the model
         history = model.fit(x_train, y_train, epochs=150, validation_data=(x_test, y_test), verbose=0)
 
-        # Display model summary
         st.write("Model Summary")
         model.summary(print_fn=lambda x: st.text(x))
 
-        # Plot accuracy vs epochs
         st.write("Accuracy vs Epochs")
         fig, ax = plt.subplots()
-        ax.plot(history.history['accuracy'])
-        ax.plot(history.history['val_accuracy'])
+        ax.plot(history.history['accuracy'], label='Train')
+        ax.plot(history.history['val_accuracy'], label='Test')
         ax.set_title('Model Accuracy')
         ax.set_ylabel('Accuracy')
         ax.set_xlabel('Epoch')
-        ax.legend(['Train', 'Test'], loc='upper left')
+        ax.legend(loc='upper left')
         st.pyplot(fig)
 
-        # Predict and display confusion matrix
-        y_pred = (model.predict(x_test) > 0.5).astype(int)  # Fixed predict_classes deprecation
+        y_pred = (model.predict(x_test) > 0.5).astype(int)
         st.write("Confusion Matrix")
         st.write(confusion_matrix(y_test, y_pred))
