@@ -35,6 +35,8 @@ task = st.sidebar.radio("Choose a task", [
     "Model Building: Sequential Model with Dropout",
     "Model Building: Sequential Model with Multiple Features"
 ])
+st.sidebar.download_button("Download .ipynb File",use_container_width=True,type='primary',data='churn.ipynb',mime='application/octet-stream')
+
 
 if task == "Code For All Tasks":
     st.header("Complete Code")
