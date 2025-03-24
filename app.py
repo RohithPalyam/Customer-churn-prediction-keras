@@ -12,10 +12,10 @@ import numpy as np
 def load_data():
     try:
         # Ensure the file path is correct and handle errors
-        data = pd.read_csv('customer_churn.csv')  # Ensure the file exists in the same directory
+        data = pd.read_csv('customer_churn.csv.csv')  # Adjust file name if necessary
         return data
     except FileNotFoundError:
-        st.error("File 'customer_churn.csv' not found. Please upload the file.")
+        st.error("File 'customer_churn.csv.csv' not found. Please upload the file.")
         return None
 
 customer = load_data()
@@ -45,26 +45,64 @@ if task == "Code For All Tasks":
     except FileNotFoundError:
         st.error("File 'code.txt' not found. Please ensure it exists in the same directory.")
 
+# Preprocessing function
+def preprocess_data(customer):
+    # Drop rows with missing values
+    customer = customer.dropna()
+
+    # Convert categorical columns to numeric
+    customer['gender'] = customer['gender'].map({'Male': 1, 'Female': 0})
+    customer['Partner'] = customer['Partner'].map({'Yes': 1, 'No': 0})
+    customer['Dependents'] = customer['Dependents'].map({'Yes': 1, 'No': 0})
+    customer['PhoneService'] = customer['PhoneService'].map({'Yes': 1, 'No': 0})
+    customer['MultipleLines'] = customer['MultipleLines'].map({'Yes': 1, 'No': 0, 'No phone service': -1})
+    customer['InternetService'] = customer['InternetService'].map({'DSL': 1, 'Fiber optic': 2, 'No': 0})
+    customer['OnlineSecurity'] = customer['OnlineSecurity'].map({'Yes': 1, 'No': 0, 'No internet service': -1})
+    customer['OnlineBackup'] = customer['OnlineBackup'].map({'Yes': 1, 'No': 0, 'No internet service': -1})
+    customer['DeviceProtection'] = customer['DeviceProtection'].map({'Yes': 1, 'No': 0, 'No internet service': -1})
+    customer['TechSupport'] = customer['TechSupport'].map({'Yes': 1, 'No': 0, 'No internet service': -1})
+    customer['StreamingTV'] = customer['StreamingTV'].map({'Yes': 1, 'No': 0, 'No internet service': -1})
+    customer['StreamingMovies'] = customer['StreamingMovies'].map({'Yes': 1, 'No': 0, 'No internet service': -1})
+    customer['Contract'] = customer['Contract'].map({'Month-to-month': 0, 'One year': 1, 'Two year': 2})
+    customer['PaperlessBilling'] = customer['PaperlessBilling'].map({'Yes': 1, 'No': 0})
+    customer['PaymentMethod'] = customer['PaymentMethod'].map({
+        'Electronic check': 0,
+        'Mailed check': 1,
+        'Bank transfer (automatic)': 2,
+        'Credit card (automatic)': 3
+    })
+    customer['Churn'] = customer['Churn'].map({'Yes': 1, 'No': 0})
+
+    # Convert TotalCharges to numeric, coercing errors to NaN and dropping them
+    customer['TotalCharges'] = pd.to_numeric(customer['TotalCharges'], errors='coerce')
+    customer = customer.dropna()
+
+    return customer
+
+# Apply preprocessing
+if customer is not None:
+    customer = preprocess_data(customer)
+
 # Main content based on task selection
 elif task == "Data Manipulation: Total Male Customers":
     st.header("Code: Total Number of Male Customers")
     with st.echo():
-        total_males = (customer['gender'] == "Male").sum()
+        total_males = (customer['gender'] == 1).sum()
         st.write(f"Total number of male customers: {total_males}")
 
 elif task == "Data Manipulation: Total DSL Customers":
     st.header("Code: Total Number of Customers with DSL Internet Service")
     with st.echo():
-        total_dsl = (customer['InternetService'] == "DSL").sum()
+        total_dsl = (customer['InternetService'] == 1).sum()
         st.write(f"Total number of customers with DSL: {total_dsl}")
 
 elif task == "Data Manipulation: Female Senior Citizens with Mailed Check":
     st.header("Code: Female Senior Citizens with Mailed Check Payment Method")
     with st.echo():
         filtered_customers = customer[
-            (customer['gender'] == 'Female') & 
+            (customer['gender'] == 0) & 
             (customer['SeniorCitizen'] == 1) & 
-            (customer['PaymentMethod'] == 'Mailed check')
+            (customer['PaymentMethod'] == 1)
         ]
         st.write(filtered_customers.head())
 
@@ -102,7 +140,7 @@ elif task == "Model Building: Sequential Model with Tenure":
     st.header("Code: Sequential Model with Tenure as Feature")
     with st.echo():
         x = customer[['tenure']].values.astype('float32')
-        y = customer['Churn'].map({'Yes': 1, 'No': 0}).values.astype('int32')
+        y = customer['Churn'].values.astype('int32')
 
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
 
@@ -136,7 +174,7 @@ elif task == "Model Building: Sequential Model with Dropout":
     st.header("Code: Sequential Model with Dropout Layers")
     with st.echo():
         x = customer[['tenure']].values.astype('float32')
-        y = customer['Churn'].map({'Yes': 1, 'No': 0}).values.astype('int32')
+        y = customer['Churn'].values.astype('int32')
 
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
 
@@ -172,7 +210,7 @@ elif task == "Model Building: Sequential Model with Multiple Features":
     st.header("Code: Sequential Model with Multiple Features")
     with st.echo():
         x = customer[['MonthlyCharges', 'tenure', 'TotalCharges']].values.astype('float32')
-        y = customer['Churn'].map({'Yes': 1, 'No': 0}).values.astype('int32')
+        y = customer['Churn'].values.astype('int32')
 
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
 
