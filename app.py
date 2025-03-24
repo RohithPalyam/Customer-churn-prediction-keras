@@ -12,7 +12,7 @@ import numpy as np
 def load_data():
     try:
         # Ensure the file path is correct and handle errors
-        data = pd.read_csv('customer_churn.csv.csv')  # Ensure the file exists in the same directory
+        data = pd.read_csv('customer_churn.csv')  # Ensure the file exists in the same directory
         return data
     except FileNotFoundError:
         st.error("File 'customer_churn.csv' not found. Please upload the file.")
